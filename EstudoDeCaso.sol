@@ -5,8 +5,10 @@ contract EstudoDeCaso {
     address vendedor;
     address banco;
     address transportadora;
+
     uint256 valor_venda;
     uint256 valor_transportadora;
+
     bool pagamentoRealizado;
     bool produtoRecebido;
     bool produtoEnviado;
@@ -17,8 +19,8 @@ contract EstudoDeCaso {
     event notificarBanco(address comprador, bool produtoRecebido);
     event transportadoraPaga(address banco, bool transporPaga);
     event produtoComprado(address comprador, address seller, uint256 valorVenda);
-    event produtoEnviado(address comprador. address transportadora);
-    event produtoEntregue(address transportadora, address comprador, bool produtoRecebido);
+    event produtoEnviadoParaComprador(address comprador, address transportadora);
+    event produtoEntregueParaComprador(address transportadora, address comprador, bool produtoRecebido);
 
     modifier apenasComprador() {
         require(msg.sender == comprador);
@@ -40,7 +42,7 @@ contract EstudoDeCaso {
         _;
     }
 
-    constructor(address _comprador, address _vendedor, address _banco, address _transportadora, uint256 _valor_venda, uint256 _valor_transportadora) {
+    function EstudoDeCaso (address _comprador, address _vendedor, address _banco, address _transportadora, uint256 _valor_venda, uint256 _valor_transportadora) public {
         comprador = _comprador;
         vendedor = _vendedor;
         banco = _banco;
@@ -54,15 +56,14 @@ contract EstudoDeCaso {
         fretePago = false;
     }
 
-
     //Funções Comprador
     function comprarProduto() apenasComprador(){
         produtoComprado(comprador, vendedor, valor_venda);
-        pagarProduto();
+        pagarProdutoParaBanco();
     }
 
-    function pagarProduto() apenasComprador() {
-        banco.send(valor_venda);
+    function pagarProdutoParaBanco() apenasComprador() {
+        banco.transfer(valor_venda);
         pagamentoRealizado = true;
     }
 
@@ -77,33 +78,33 @@ contract EstudoDeCaso {
     }
 
 
-    function pagarProduto() apenasBanco(){
+    function pagarProdutoParaVendedor() apenasBanco(){
         if(pagamentoRealizado == true){
-            vendedor.send(valor_venda);
+            vendedor.transfer(valor_venda);
         }
     }
 
     function pagarTransportadora() apenasBanco(){
-        if(fretePago = true){
-          transportadora.send(valor_transportadora);
+        if(fretePago == true){
+          transportadora.transfer(valor_transportadora);
           transporPaga = true;
         }
     }
 
     //Funções vendedor
     function enviarProduto() apenasVendedor(){
-        produtoEnviado(vendedor, transportadora);
+        produtoEnviadoParaComprador(vendedor, transportadora);
         produtoEnviado = true;
     }
 
     function pagarFrete() apenasVendedor(){
-        banco.send(valor_transportadora);
+        banco.transfer(valor_transportadora);
         fretePago = true;
     }
 
     //Funções transportadora
     function notificarProdutoEntregue() apenasTransportadora(){
-        notificarProdutoEntregue(transportadora, comprador, produtoRecebido);
+        produtoEntregueParaComprador(transportadora, comprador, produtoRecebido);
     }
 
 }
